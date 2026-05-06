@@ -261,6 +261,7 @@ FileManager  →  persistentDataPath · partida.json
 - [ ] Prueba de usabilidad con 5 usuarios
 - [ ] Sonido y música
 - [ ] Menú de pausa
+- [ ] Login
 
 ---
 
