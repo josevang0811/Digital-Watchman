@@ -2,7 +2,7 @@
 
 > **Un videojuego de concienciación sobre el ciberacoso basado en Estructuras de Datos**
 
-**Universidad del Norte — Departamento de Ingeniería de Sistemas y Computación**  
+**Universidad del Norte 
 **Estructuras de Datos I — 2026-10**
 
 ---
