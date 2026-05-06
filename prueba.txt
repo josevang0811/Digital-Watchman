@@ -1,0 +1,2 @@
+Este es un archivo de prueba creado desde la rama jose-fer.
+Así se vería un cambio antes de hacer Pull Request a main.
