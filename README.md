@@ -252,7 +252,7 @@ FileManager  →  persistentDataPath · partida.json
 
 ---
 
-## 🗺️ Trabajo futuro (entrega final — Feria Gamer, 28 de mayo de 2026)
+## 🗺️ Trabajo futuro (entrega final)
 
 - [ ] Componente inclusivo de accesibilidad (subtítulos)
 - [ ] Menú principal con selección de nombre del jugador
