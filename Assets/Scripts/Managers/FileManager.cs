@@ -15,6 +15,13 @@ using UnityEngine;
 // que el sistema operativo asigna específicamente a este juego.
 // En Windows: C:/Users/[usuario]/AppData/LocalLow/[empresa]/[juego]
 // Es una ruta segura que no requiere permisos especiales.
+//
+// ----- Compatibilidad WebGL -----
+// En WebGL no existe acceso al sistema de archivos del usuario,
+// así que en esa plataforma usamos PlayerPrefs (que Unity
+// almacena en IndexedDB del navegador) como fallback.
+// La API pública (Guardar/Cargar) sigue siendo idéntica —
+// el resto del juego no nota la diferencia.
 // ============================================================
 
 public class FileManager : MonoBehaviour
@@ -53,7 +60,7 @@ public class FileManager : MonoBehaviour
 
     // ----------------------------------------------------------
     // Guardar() — toma el estado actual del juego y lo escribe
-    // en un archivo JSON en el disco
+    // en un archivo JSON en el disco (o PlayerPrefs en WebGL)
     // ----------------------------------------------------------
     public void Guardar(string nombreJugador, int puntaje, float vidaActual, int misionActual)
     {
@@ -77,9 +84,8 @@ public class FileManager : MonoBehaviour
         // El true activa el formato legible (indentado)
         string json = JsonUtility.ToJson(datos, true);
 
-        // File.WriteAllText escribe el texto en el archivo
-        // Si el archivo no existe, lo crea automáticamente
-        File.WriteAllText(rutaGuardado, json);
+        // EscribirJson encapsula File I/O / PlayerPrefs según plataforma
+        EscribirJson(rutaGuardado, archivoGuardado, json);
 
         Debug.Log("Juego guardado correctamente:\n" + json);
 
@@ -94,15 +100,14 @@ public class FileManager : MonoBehaviour
     // ----------------------------------------------------------
     public DatosGuardado Cargar()
     {
-        // Verificamos que el archivo existe antes de leerlo
-        if (!File.Exists(rutaGuardado))
+        // LeerJson encapsula File I/O / PlayerPrefs según plataforma
+        string json = LeerJson(rutaGuardado, archivoGuardado);
+
+        if (string.IsNullOrEmpty(json))
         {
             Debug.Log("No existe archivo de guardado — partida nueva");
             return null;
         }
-
-        // File.ReadAllText lee todo el contenido del archivo
-        string json = File.ReadAllText(rutaGuardado);
 
         // JsonUtility.FromJson convierte el texto JSON de vuelta
         // a un objeto C# de tipo DatosGuardado
@@ -124,7 +129,7 @@ public class FileManager : MonoBehaviour
         datos.leaderboard = puntajes;
 
         string json = JsonUtility.ToJson(datos, true);
-        File.WriteAllText(rutaLeaderboard, json);
+        EscribirJson(rutaLeaderboard, archivoLeaderboard, json);
 
         Debug.Log("Leaderboard guardado");
     }
@@ -134,13 +139,14 @@ public class FileManager : MonoBehaviour
     // ----------------------------------------------------------
     public int[] CargarLeaderboard()
     {
-        if (!File.Exists(rutaLeaderboard))
+        string json = LeerJson(rutaLeaderboard, archivoLeaderboard);
+
+        if (string.IsNullOrEmpty(json))
         {
             Debug.Log("No existe leaderboard — retornando vacío");
             return new int[5]; // Array de 5 ceros
         }
 
-        string json = File.ReadAllText(rutaLeaderboard);
         DatosGuardado datos = JsonUtility.FromJson<DatosGuardado>(json);
 
         return datos.leaderboard;
@@ -151,10 +157,50 @@ public class FileManager : MonoBehaviour
     // ----------------------------------------------------------
     public void EliminarGuardado()
     {
-        if (File.Exists(rutaGuardado))
+        BorrarJson(rutaGuardado, archivoGuardado);
+        Debug.Log("Archivo de guardado eliminado");
+    }
+
+    // ============================================================
+    // Helpers de persistencia — abstraen File I/O vs PlayerPrefs
+    // ============================================================
+    // En editor y standalone (Windows/Mac/Linux) usamos File I/O
+    // real para cumplir el requisito de la rúbrica.
+    // En WebGL caemos a PlayerPrefs, que Unity persiste en
+    // IndexedDB del navegador. La key es el nombre del archivo.
+    // ============================================================
+
+    void EscribirJson(string ruta, string keyPrefs, string json)
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        PlayerPrefs.SetString(keyPrefs, json);
+        PlayerPrefs.Save();
+#else
+        File.WriteAllText(ruta, json);
+#endif
+    }
+
+    string LeerJson(string ruta, string keyPrefs)
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        if (!PlayerPrefs.HasKey(keyPrefs)) return null;
+        return PlayerPrefs.GetString(keyPrefs);
+#else
+        if (!File.Exists(ruta)) return null;
+        return File.ReadAllText(ruta);
+#endif
+    }
+
+    void BorrarJson(string ruta, string keyPrefs)
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        if (PlayerPrefs.HasKey(keyPrefs))
         {
-            File.Delete(rutaGuardado);
-            Debug.Log("Archivo de guardado eliminado");
+            PlayerPrefs.DeleteKey(keyPrefs);
+            PlayerPrefs.Save();
         }
+#else
+        if (File.Exists(ruta)) File.Delete(ruta);
+#endif
     }
 }
