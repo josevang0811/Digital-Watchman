@@ -283,8 +283,9 @@ public class MissionManager : MonoBehaviour
         // Guardamos progreso con File I/O
         if (FileManager.Instance != null)
         {
-            string nombre = PlayerPrefs.GetString("NombreJugador", "Jugador");
+            string nombre = PlayerPrefs.GetString("IdentificadorActual", "Jugador");
             FileManager.Instance.Guardar(nombre, puntajeTotal, ph != null ? ph.GetVidaActual() : 100f, mision.id);
+            FileManager.Instance.GuardarLeaderboard(nombre, puntajeTotal);
         }
 
         // -------------------------------------------------------
