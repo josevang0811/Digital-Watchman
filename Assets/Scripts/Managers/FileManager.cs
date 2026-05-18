@@ -123,31 +123,61 @@ public class FileManager : MonoBehaviour
     // ----------------------------------------------------------
     // GuardarLeaderboard() — guarda el top 5 de puntajes
     // ----------------------------------------------------------
-    public void GuardarLeaderboard(int[] puntajes)
+    // ----------------------------------------------------------
+    // GuardarLeaderboard() — recibe el identificador y puntaje
+    // del jugador, los inserta en el top 5, ordena y guarda
+    // ----------------------------------------------------------
+    public void GuardarLeaderboard(string identificador, int puntaje)
     {
+        // Cargamos el leaderboard existente
+        LeaderboardEntry[] entradas = CargarLeaderboard();
+
+        // Creamos la nueva entrada
+        LeaderboardEntry nueva = new LeaderboardEntry();
+        nueva.identificador = identificador;
+        nueva.puntaje = puntaje;
+
+        // Convertimos a lista para poder insertar
+        System.Collections.Generic.List<LeaderboardEntry> lista =
+            new System.Collections.Generic.List<LeaderboardEntry>(entradas);
+
+        lista.Add(nueva);
+
+        // Ordenamos de mayor a menor puntaje
+        lista.Sort((a, b) => b.puntaje.CompareTo(a.puntaje));
+
+        // Recortamos a top 5
+        if (lista.Count > 5)
+            lista.RemoveRange(5, lista.Count - 5);
+
+        // Guardamos
         DatosGuardado datos = new DatosGuardado();
-        datos.leaderboard = puntajes;
+        datos.leaderboard = lista.ToArray();
 
         string json = JsonUtility.ToJson(datos, true);
         EscribirJson(rutaLeaderboard, archivoLeaderboard, json);
 
-        Debug.Log("Leaderboard guardado");
+        Debug.Log("Leaderboard actualizado — " + identificador + ": " + puntaje);
     }
 
     // ----------------------------------------------------------
-    // CargarLeaderboard() — recupera el top 5 del archivo
+    // CargarLeaderboard() — retorna el top 5 actual
+    // Si no existe archivo retorna array vacío
     // ----------------------------------------------------------
-    public int[] CargarLeaderboard()
+    public LeaderboardEntry[] CargarLeaderboard()
     {
         string json = LeerJson(rutaLeaderboard, archivoLeaderboard);
 
         if (string.IsNullOrEmpty(json))
         {
             Debug.Log("No existe leaderboard — retornando vacío");
-            return new int[5]; // Array de 5 ceros
+            return new LeaderboardEntry[0];
         }
 
         DatosGuardado datos = JsonUtility.FromJson<DatosGuardado>(json);
+
+        if (datos.leaderboard == null)
+            return new LeaderboardEntry[0];
 
         return datos.leaderboard;
     }
