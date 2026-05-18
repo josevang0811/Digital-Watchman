@@ -23,7 +23,8 @@ public class GameOverScreen : MonoBehaviour
     public TextMeshProUGUI textoTitulo;       // "GAME OVER"
     public TextMeshProUGUI textoPuntaje;      // Puntaje final
     public TextMeshProUGUI textoAcciones;     // Historial del Stack
-    public Button botonReiniciar;             // Botón Reiniciar
+    public Button botonReiniciar;              // Botón Reiniciar 
+    public Button botonMenu;
     [SerializeField] GameObject hud;              // Referencia al HUD para ocultarlo
 
     void Awake()
@@ -42,6 +43,8 @@ public class GameOverScreen : MonoBehaviour
         // Conectamos el botón al método Reiniciar
         if (botonReiniciar != null)
             botonReiniciar.onClick.AddListener(Reiniciar);
+        if (botonMenu != null)
+            botonMenu.onClick.AddListener(IrAlMenu);
     }
 
     // ----------------------------------------------------------
@@ -50,7 +53,7 @@ public class GameOverScreen : MonoBehaviour
     // ----------------------------------------------------------
     public void Mostrar(int puntajeFinal)
     {
-        if(hud!=null) hud.SetActive(false);
+        if (hud != null) hud.SetActive(false);
 
         // Activamos el Canvas
         gameObject.SetActive(true);
@@ -65,6 +68,13 @@ public class GameOverScreen : MonoBehaviour
         // Puntaje
         if (textoPuntaje != null)
             textoPuntaje.text = "Puntaje final: " + puntajeFinal;
+
+        // Registramos el puntaje en el leaderboard al morir
+        if (FileManager.Instance != null)
+        {
+            string nombre = PlayerPrefs.GetString("IdentificadorActual", "Jugador");
+            FileManager.Instance.GuardarLeaderboard(nombre, puntajeFinal);
+        }
 
         // ----------------------------------------------------------
         // STACK EN ACCIÓN: leemos las últimas acciones
@@ -107,5 +117,14 @@ public class GameOverScreen : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene(
             UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
         );
+    }
+    void IrAlMenu()
+    {
+        Time.timeScale = 1f;
+
+        if (ActionStack.Instance != null)
+            ActionStack.Instance.Limpiar();
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
 }
